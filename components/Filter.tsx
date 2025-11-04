@@ -24,7 +24,7 @@ const Filter: React.FC<FilterProps> = ({
   suppliers,
   currentUser,
 }) => {
-  const isManager = currentUser.role === 'Manager';
+  const isPrivilegedUser = currentUser.role === 'Manager' || currentUser.role === 'Admin';
   const requesters = users.map(u => u.name);
 
   return (
@@ -33,41 +33,41 @@ const Filter: React.FC<FilterProps> = ({
         <FilterIcon className="h-5 w-5 mr-2 text-gray-500" />
         Bộ Lọc Đơn Hàng
       </h2>
-      <div className={`grid grid-cols-1 sm:grid-cols-2 ${isManager ? 'lg:grid-cols-4' : 'lg:grid-cols-3'} gap-4`}>
-        {isManager && (
-          <div>
-            <label htmlFor="requesterFilter" className="block text-sm font-medium text-gray-700">Người Yêu Cầu</label>
-            <input
-              type="text"
-              id="requesterFilter"
-              name="requester"
-              list="requesters-list"
-              value={filters.requester}
-              onChange={onFilterChange}
-              className="mt-1 block w-full bg-white text-black border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
-              placeholder="Tất cả"
-              aria-label="Filter by requester"
-            />
-            <datalist id="requesters-list">
-              {requesters.map(r => <option key={r} value={r} />)}
-            </datalist>
-          </div>
-        )}
-        {isManager && (
-          <div>
-            <label htmlFor="supplierFilter" className="block text-sm font-medium text-gray-700">Nhà Cung Cấp</label>
-            <select
-              id="supplierFilter"
-              name="supplier"
-              value={filters.supplier}
-              onChange={onFilterChange}
-              className="mt-1 block w-full bg-white text-black border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
-              aria-label="Filter by supplier"
-            >
-              <option value="">Tất cả</option>
-              {suppliers.map(s => <option key={s} value={s}>{s}</option>)}
-            </select>
-          </div>
+      <div className={`grid grid-cols-1 sm:grid-cols-2 ${isPrivilegedUser ? 'lg:grid-cols-4' : 'lg:grid-cols-2'} gap-4`}>
+        {isPrivilegedUser && (
+          <>
+            <div>
+              <label htmlFor="requesterFilter" className="block text-sm font-medium text-gray-700">Người Yêu Cầu</label>
+              <input
+                type="text"
+                id="requesterFilter"
+                name="requester"
+                list="requesters-list"
+                value={filters.requester}
+                onChange={onFilterChange}
+                className="mt-1 block w-full bg-white text-black border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                placeholder="Tất cả"
+                aria-label="Filter by requester"
+              />
+              <datalist id="requesters-list">
+                {requesters.map(r => <option key={r} value={r} />)}
+              </datalist>
+            </div>
+            <div>
+              <label htmlFor="supplierFilter" className="block text-sm font-medium text-gray-700">Nhà Cung Cấp</label>
+              <select
+                id="supplierFilter"
+                name="supplier"
+                value={filters.supplier}
+                onChange={onFilterChange}
+                className="mt-1 block w-full bg-white text-black border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                aria-label="Filter by supplier"
+              >
+                <option value="">Tất cả</option>
+                {suppliers.map(s => <option key={s} value={s}>{s}</option>)}
+              </select>
+            </div>
+          </>
         )}
         <div>
           <label htmlFor="startDate" className="block text-sm font-medium text-gray-700">Từ Ngày</label>

@@ -1,5 +1,5 @@
 import React, { useRef, useState, useEffect } from 'react';
-import { ExportIcon, TruckIcon, SearchIcon, LogoutIcon, BackupIcon, UploadIcon, PhoneIcon } from './icons/Icons';
+import { ExportIcon, TruckIcon, SearchIcon, LogoutIcon, BackupIcon, UploadIcon, PhoneIcon, MenuIcon } from './icons/Icons';
 import { User } from '../types';
 
 interface HeaderProps {
@@ -16,6 +16,7 @@ interface HeaderProps {
 const Header: React.FC<HeaderProps> = ({ onExport, onBackup, onRestore, orderCount, globalSearch, onSearchChange, authenticatedUser, onLogout }) => {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [currentDateTime, setCurrentDateTime] = useState(new Date());
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   useEffect(() => {
     const timerId = setInterval(() => {
@@ -24,13 +25,12 @@ const Header: React.FC<HeaderProps> = ({ onExport, onBackup, onRestore, orderCou
     return () => clearInterval(timerId);
   }, []);
 
-
   const handleRestoreClick = () => {
     fileInputRef.current?.click();
   };
 
   return (
-    <header className="bg-white shadow-md sticky top-0 z-10">
+    <header className="bg-white shadow-md sticky top-0 z-20">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16 gap-4">
           <div className="flex items-center space-x-3 flex-shrink-0">
@@ -64,18 +64,19 @@ const Header: React.FC<HeaderProps> = ({ onExport, onBackup, onRestore, orderCou
             </div>
           </div>
 
-          <div className="flex items-center space-x-2 sm:space-x-4 flex-shrink-0">
-             <span className="text-sm font-medium text-gray-500 hidden sm:block">
-               Tổng số đơn: <span className="text-blue-600 font-semibold">{orderCount}</span>
+          {/* Desktop Menu */}
+          <div className="hidden lg:flex items-center space-x-2 sm:space-x-4 flex-shrink-0">
+             <span className="text-sm font-medium text-gray-500">
+               Tổng: <span className="text-blue-600 font-semibold">{orderCount}</span>
              </span>
             
-            <div className="text-right hidden sm:block border-l pl-4 border-gray-200">
+            <div className="text-right border-l pl-4 border-gray-200">
               <p className="text-sm font-medium text-gray-800">{currentDateTime.toLocaleTimeString('vi-VN')}</p>
-              <p className="text-xs text-gray-500">{currentDateTime.toLocaleDateString('vi-VN', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</p>
+              <p className="text-xs text-gray-500">{currentDateTime.toLocaleDateString('vi-VN', { weekday: 'long', day: 'numeric', month: 'long' })}</p>
             </div>
 
             <div className="flex items-center space-x-3">
-              <div className="text-right hidden sm:block">
+              <div className="text-right">
                   <p className="text-sm font-medium text-gray-800">{authenticatedUser.name}</p>
                   <p className="text-xs text-gray-500">{authenticatedUser.role}</p>
               </div>
@@ -100,30 +101,78 @@ const Header: React.FC<HeaderProps> = ({ onExport, onBackup, onRestore, orderCou
                 />
                <button
                 onClick={handleRestoreClick}
-                className="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md shadow-sm text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors"
-              >
-                <UploadIcon className="h-5 w-5 mr-2" />
-                <span className="hidden md:inline">Khôi Phục</span>
+                title="Khôi Phục"
+                className="inline-flex items-center p-2 border border-gray-300 text-sm font-medium rounded-md shadow-sm text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors"
+               >
+                <UploadIcon className="h-5 w-5" />
               </button>
                <button
                 onClick={onBackup}
-                className="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md shadow-sm text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors"
+                title="Sao Lưu"
+                className="inline-flex items-center p-2 border border-gray-300 text-sm font-medium rounded-md shadow-sm text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors"
               >
-                <BackupIcon className="h-5 w-5 mr-2" />
-                <span className="hidden md:inline">Sao Lưu</span>
+                <BackupIcon className="h-5 w-5" />
               </button>
               </>
             )}
 
             <button
               onClick={onExport}
-              className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors"
+              className="inline-flex items-center px-3 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors"
             >
               <ExportIcon className="h-5 w-5 mr-2" />
-              <span className="hidden md:inline">Xuất Báo Cáo</span>
+              <span>Xuất File</span>
             </button>
           </div>
+          
+          {/* Mobile Menu Button */}
+          <div className="lg:hidden flex items-center">
+             <button
+                onClick={() => setIsMenuOpen(!isMenuOpen)}
+                className="p-2 rounded-md text-gray-500 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-blue-500"
+                aria-expanded={isMenuOpen}
+             >
+                <MenuIcon className="h-6 w-6" />
+             </button>
+          </div>
         </div>
+        
+        {/* Mobile Dropdown Menu */}
+        {isMenuOpen && (
+            <div className="lg:hidden absolute top-16 right-4 mt-2 w-64 bg-white rounded-md shadow-lg ring-1 ring-black ring-opacity-5 z-30">
+                <div className="py-1" role="menu" aria-orientation="vertical" aria-labelledby="mobile-menu-button">
+                    <div className="px-4 py-3 border-b border-gray-200">
+                        <p className="text-sm font-medium text-gray-900 truncate">{authenticatedUser.name}</p>
+                        <p className="text-sm text-gray-500">{authenticatedUser.role}</p>
+                    </div>
+                    <div className="px-4 py-3 border-b border-gray-200">
+                        <p className="text-sm font-medium text-gray-800">{currentDateTime.toLocaleTimeString('vi-VN')}</p>
+                        <p className="text-xs text-gray-500">{currentDateTime.toLocaleDateString('vi-VN', { weekday: 'long', day: 'numeric', month: 'long' })}</p>
+                    </div>
+                     <div className="py-1">
+                        <button onClick={onExport} className="w-full text-left flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+                            <ExportIcon className="h-5 w-5 mr-3" /> Xuất Báo Cáo
+                        </button>
+                        {authenticatedUser.role === 'Admin' && (
+                            <>
+                                <button onClick={handleRestoreClick} className="w-full text-left flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+                                    <UploadIcon className="h-5 w-5 mr-3" /> Khôi Phục Dữ Liệu
+                                </button>
+                                <button onClick={onBackup} className="w-full text-left flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+                                    <BackupIcon className="h-5 w-5 mr-3" /> Sao Lưu Dữ Liệu
+                                </button>
+                            </>
+                        )}
+                    </div>
+                    <div className="py-1 border-t border-gray-200">
+                        <button onClick={onLogout} className="w-full text-left flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+                            <LogoutIcon className="h-5 w-5 mr-3" /> Đăng xuất
+                        </button>
+                    </div>
+                </div>
+            </div>
+        )}
+
       </div>
     </header>
   );

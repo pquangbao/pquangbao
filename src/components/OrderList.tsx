@@ -39,8 +39,6 @@ const OrderList: React.FC<OrderListProps> = ({ orders, totalOrders, onDeleteOrde
   }
 
   const isManager = currentUser.role === 'Manager' || currentUser.role === 'Admin';
-  // Correctly calculate the number of columns for the colSpan attribute.
-  // Manager/Admin has 8 columns, Requester has 6.
   const visibleColumnCount = isManager ? 8 : 6;
 
   return (
@@ -54,11 +52,11 @@ const OrderList: React.FC<OrderListProps> = ({ orders, totalOrders, onDeleteOrde
             <tr>
               <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Người Yêu Cầu</th>
               <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Dự Án</th>
-              <th scope="col" className="hidden lg:table-cell px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Lấy/Giao Hàng</th>
               <th scope="col" className="hidden md:table-cell px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tuyến Đường</th>
+              <th scope="col" className="hidden md:table-cell px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Lấy/Giao Hàng</th>
               <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Trạng Thái</th>
               {isManager && <th scope="col" className="hidden lg:table-cell px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Nhà Cung Cấp</th>}
-              <th scope="col" className="hidden md:table-cell px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Ghi Chú</th>
+              <th scope="col" className="hidden lg:table-cell px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Ghi Chú</th>
               {isManager && <th scope="col" className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Hành động</th>}
             </tr>
           </thead>
@@ -92,13 +90,13 @@ const OrderList: React.FC<OrderListProps> = ({ orders, totalOrders, onDeleteOrde
                         </div>
                       </div>
                     </td>
-                    <td className="hidden lg:table-cell px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        <div>Lấy: {new Date(order.pickupDate).toLocaleDateString('vi-VN')}</div>
-                        <div>Giao: {new Date(order.deliveryDate).toLocaleDateString('vi-VN')}</div>
-                    </td>
                     <td className="hidden md:table-cell px-6 py-4 whitespace-nowrap">
                         <div className="text-sm text-gray-900">{order.pickupWarehouse}</div>
                         <div className="text-sm text-gray-500">→ {order.deliveryWarehouse}</div>
+                    </td>
+                    <td className="hidden md:table-cell px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        <div>Lấy: {new Date(order.pickupDate).toLocaleDateString('vi-VN')}</div>
+                        <div>Giao: {new Date(order.deliveryDate).toLocaleDateString('vi-VN')}</div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${order.status === 'Assigned' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'}`}>
@@ -114,7 +112,7 @@ const OrderList: React.FC<OrderListProps> = ({ orders, totalOrders, onDeleteOrde
                         {order.supplier ? order.supplier : <span className="text-gray-400 italic">Chưa gán</span>}
                       </td>
                     )}
-                    <td className="hidden md:table-cell px-6 py-4 text-sm text-gray-500">
+                    <td className="hidden lg:table-cell px-6 py-4 text-sm text-gray-500">
                         <div className="max-w-xs truncate" title={order.notes}>
                             {order.notes ? order.notes : <span className="text-gray-400 italic">N/A</span>}
                         </div>
