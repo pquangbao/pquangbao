@@ -14,6 +14,9 @@ import Tabs from './components/Tabs';
 import UserManagement from './components/UserManagement';
 import UserDetailsModal from './components/UserDetailsModal';
 import EditUserModal from './components/EditUserModal';
+import { createGist, getGist, updateGist } from './services/githubService';
+import GithubSyncModal from './components/GithubSyncModal';
+
 
 // --- Sample user data, used only if localStorage is empty ---
 const initialUsers: User[] = [
@@ -45,6 +48,10 @@ const App: React.FC = () => {
   const [dataToRestore, setDataToRestore] = useState<{orders: Order[], users: User[], suppliers: string[]} | null>(null);
   const [authenticatedUser, setAuthenticatedUser] = useLocalStorage<User | null>('authenticatedUser', null);
   const [activeTab, setActiveTab] = useState<'orders' | 'users'>('orders');
+  const [syncModalState, setSyncModalState] = useState<{ isOpen: boolean; mode: 'sync' | 'load' }>({
+    isOpen: false,
+    mode: 'sync'
+  });
 
   const userMap = useMemo(() => new Map(users.map(u => [u.id, u])), [users]);
 
@@ -376,6 +383,42 @@ const App: React.FC = () => {
     setDataToRestore(null);
   };
 
+  const handleOpenSyncModal = (mode: 'sync' | 'load') => {
+    setSyncModalState({ isOpen: true, mode });
+  };
+
+  const handleCloseSyncModal = () => {
+      setSyncModalState({ isOpen: false, mode: 'sync' });
+  };
+
+  const handleGithubSync = async (pat: string, gistId: string) => {
+      const { mode } = syncModalState;
+      try {
+          if (mode === 'sync') {
+              const backupData = { orders, users, suppliers };
+              if (gistId) {
+                  await updateGist(pat, gistId, backupData);
+                  showToast(`Đã cập nhật Gist ${gistId} thành công!`);
+              } else {
+                  const { id: newGistId } = await createGist(pat, backupData);
+                  showToast(`Đã tạo Gist mới thành công! ID: ${newGistId}`);
+              }
+          } else { // mode === 'load'
+              const data = await getGist(pat, gistId);
+              // Basic validation
+              if (!data.orders || !data.users || !data.suppliers || !Array.isArray(data.orders) || !Array.isArray(data.users) || !Array.isArray(data.suppliers)) {
+                  throw new Error('Invalid backup data format in Gist.');
+              }
+              setDataToRestore(data);
+          }
+          handleCloseSyncModal();
+      } catch (error) {
+          console.error("GitHub Sync Error:", error);
+          showToast(`Lỗi: ${error instanceof Error ? error.message : 'Unknown error'}`);
+          // Do not close modal on error, so user can try again.
+      }
+  };
+
   if (!authenticatedUser) {
     return (
       <>
@@ -400,6 +443,7 @@ const App: React.FC = () => {
         onSearchChange={handleGlobalSearch}
         authenticatedUser={authenticatedUser}
         onLogout={handleLogout}
+        onOpenSyncModal={handleOpenSyncModal}
       />
       <main className="p-4 sm:p-6 lg:p-8">
         <div className="max-w-7xl mx-auto">
@@ -503,6 +547,14 @@ const App: React.FC = () => {
           onClose={handleCancelEditUser}
           onConfirm={handleUpdateUser}
           user={userToEdit}
+        />
+      )}
+      {syncModalState.isOpen && (
+        <GithubSyncModal
+            isOpen={syncModalState.isOpen}
+            onClose={handleCloseSyncModal}
+            onConfirm={handleGithubSync}
+            mode={syncModalState.mode}
         />
       )}
       <ToastContainer>

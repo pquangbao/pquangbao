@@ -1,5 +1,5 @@
 import React, { useRef, useState, useEffect } from 'react';
-import { ExportIcon, TruckIcon, SearchIcon, LogoutIcon, BackupIcon, UploadIcon, PhoneIcon, MenuIcon } from './icons/Icons';
+import { ExportIcon, TruckIcon, SearchIcon, LogoutIcon, BackupIcon, UploadIcon, PhoneIcon, MenuIcon, GithubIcon } from './icons/Icons';
 import { User } from '../types';
 
 interface HeaderProps {
@@ -11,9 +11,10 @@ interface HeaderProps {
   onSearchChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
   authenticatedUser: User;
   onLogout: () => void;
+  onOpenSyncModal: (mode: 'sync' | 'load') => void;
 }
 
-const Header: React.FC<HeaderProps> = ({ onExport, onBackup, onRestore, orderCount, globalSearch, onSearchChange, authenticatedUser, onLogout }) => {
+const Header: React.FC<HeaderProps> = ({ onExport, onBackup, onRestore, orderCount, globalSearch, onSearchChange, authenticatedUser, onLogout, onOpenSyncModal }) => {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [currentDateTime, setCurrentDateTime] = useState(new Date());
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -91,6 +92,20 @@ const Header: React.FC<HeaderProps> = ({ onExport, onBackup, onRestore, orderCou
 
             {authenticatedUser.role === 'Admin' && (
               <>
+               <button
+                  onClick={() => onOpenSyncModal('sync')}
+                  title="Đồng bộ lên Gist"
+                  className="inline-flex items-center p-2 border border-gray-300 text-sm font-medium rounded-md shadow-sm text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors"
+                >
+                    <GithubIcon className="h-5 w-5" />
+                </button>
+                <button
+                    onClick={() => onOpenSyncModal('load')}
+                    title="Tải từ Gist"
+                    className="inline-flex items-center p-2 border border-gray-300 text-sm font-medium rounded-md shadow-sm text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors"
+                >
+                    <GithubIcon className="h-5 w-5" />
+                </button>
                <input 
                   type="file" 
                   ref={fileInputRef} 
@@ -155,10 +170,16 @@ const Header: React.FC<HeaderProps> = ({ onExport, onBackup, onRestore, orderCou
                         </button>
                         {authenticatedUser.role === 'Admin' && (
                             <>
-                                <button onClick={handleRestoreClick} className="w-full text-left flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+                                <button onClick={() => { onOpenSyncModal('sync'); setIsMenuOpen(false); }} className="w-full text-left flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+                                    <GithubIcon className="h-5 w-5 mr-3" /> Đồng bộ lên Gist
+                                </button>
+                                <button onClick={() => { onOpenSyncModal('load'); setIsMenuOpen(false); }} className="w-full text-left flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+                                    <GithubIcon className="h-5 w-5 mr-3" /> Tải từ Gist
+                                </button>
+                                <button onClick={() => { handleRestoreClick(); setIsMenuOpen(false); }} className="w-full text-left flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
                                     <UploadIcon className="h-5 w-5 mr-3" /> Khôi Phục Dữ Liệu
                                 </button>
-                                <button onClick={onBackup} className="w-full text-left flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+                                <button onClick={() => { onBackup(); setIsMenuOpen(false); }} className="w-full text-left flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
                                     <BackupIcon className="h-5 w-5 mr-3" /> Sao Lưu Dữ Liệu
                                 </button>
                             </>
