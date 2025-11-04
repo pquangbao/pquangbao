@@ -1,5 +1,5 @@
 import React, { useRef, useState, useEffect } from 'react';
-import { ExportIcon, TruckIcon, SearchIcon, LogoutIcon, BackupIcon, UploadIcon, PhoneIcon, MenuIcon, GithubIcon } from './icons/Icons';
+import { ExportIcon, TruckIcon, SearchIcon, LogoutIcon, BackupIcon, UploadIcon, PhoneIcon, MenuIcon, GithubIcon, CloudIcon, CheckCircleIcon, ExclamationCircleIcon } from './icons/Icons';
 import { User } from '../types';
 
 interface HeaderProps {
@@ -12,12 +12,14 @@ interface HeaderProps {
   authenticatedUser: User;
   onLogout: () => void;
   onOpenSyncModal: (mode: 'sync' | 'load') => void;
+  syncStatus: 'idle' | 'syncing' | 'synced' | 'error';
 }
 
-const Header: React.FC<HeaderProps> = ({ onExport, onBackup, onRestore, orderCount, globalSearch, onSearchChange, authenticatedUser, onLogout, onOpenSyncModal }) => {
+const Header: React.FC<HeaderProps> = ({ onExport, onBackup, onRestore, orderCount, globalSearch, onSearchChange, authenticatedUser, onLogout, onOpenSyncModal, syncStatus }) => {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [currentDateTime, setCurrentDateTime] = useState(new Date());
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [lastSyncedTime, setLastSyncedTime] = useState<Date | null>(null);
 
   useEffect(() => {
     const timerId = setInterval(() => {
@@ -25,6 +27,12 @@ const Header: React.FC<HeaderProps> = ({ onExport, onBackup, onRestore, orderCou
     }, 1000);
     return () => clearInterval(timerId);
   }, []);
+
+  useEffect(() => {
+      if(syncStatus === 'synced') {
+          setLastSyncedTime(new Date());
+      }
+  }, [syncStatus])
 
   const handleRestoreClick = () => {
     fileInputRef.current?.click();
@@ -67,9 +75,22 @@ const Header: React.FC<HeaderProps> = ({ onExport, onBackup, onRestore, orderCou
 
           {/* Desktop Menu */}
           <div className="hidden lg:flex items-center space-x-2 sm:space-x-4 flex-shrink-0">
-             <span className="text-sm font-medium text-gray-500">
-               Tổng: <span className="text-blue-600 font-semibold">{orderCount}</span>
-             </span>
+             <div className="flex items-center space-x-2">
+                <span className="text-sm font-medium text-gray-500">
+                Tổng: <span className="text-blue-600 font-semibold">{orderCount}</span>
+                </span>
+                {authenticatedUser.role === 'Admin' && syncStatus !== 'idle' && (
+                    <div className="flex items-center space-x-1 text-xs text-gray-500" title={
+                        syncStatus === 'syncing' ? `Đang đồng bộ...` :
+                        syncStatus === 'synced' && lastSyncedTime ? `Đã đồng bộ lúc ${lastSyncedTime.toLocaleTimeString('vi-VN')}` :
+                        `Đồng bộ thất bại`
+                    }>
+                        {syncStatus === 'syncing' && <CloudIcon className="h-4 w-4 animate-pulse text-blue-500" />}
+                        {syncStatus === 'synced' && <CheckCircleIcon className="h-4 w-4 text-green-500" />}
+                        {syncStatus === 'error' && <ExclamationCircleIcon className="h-4 w-4 text-red-500" />}
+                    </div>
+                )}
+             </div>
             
             <div className="text-right border-l pl-4 border-gray-200">
               <p className="text-sm font-medium text-gray-800">{currentDateTime.toLocaleTimeString('vi-VN')}</p>

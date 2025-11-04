@@ -5,22 +5,25 @@ import { GithubIcon } from './icons/Icons';
 interface GithubSyncModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onConfirm: (pat: string, gistId: string) => Promise<void>;
+  onConfirm: (pat: string, gistId: string, remember: boolean) => Promise<void>;
   mode: 'sync' | 'load';
+  credentials: { pat: string; gistId: string };
 }
 
-const GithubSyncModal: React.FC<GithubSyncModalProps> = ({ isOpen, onClose, onConfirm, mode }) => {
+const GithubSyncModal: React.FC<GithubSyncModalProps> = ({ isOpen, onClose, onConfirm, mode, credentials }) => {
   const [pat, setPat] = useState('');
   const [gistId, setGistId] = useState('');
+  const [remember, setRemember] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
 
   useEffect(() => {
     if (isOpen) {
-      setPat('');
-      setGistId('');
+      setPat(credentials.pat || '');
+      setGistId(credentials.gistId || '');
+      setRemember(!!(credentials.pat && credentials.gistId));
       setIsProcessing(false);
     }
-  }, [isOpen]);
+  }, [isOpen, credentials]);
 
   const handleConfirmClick = async () => {
     if (!pat || (mode === 'load' && !gistId)) {
@@ -28,8 +31,7 @@ const GithubSyncModal: React.FC<GithubSyncModalProps> = ({ isOpen, onClose, onCo
         return;
     }
     setIsProcessing(true);
-    await onConfirm(pat, gistId);
-    // Only set processing to false if operation is complete. Error handling in App.tsx will keep modal open.
+    await onConfirm(pat, gistId, remember);
     setIsProcessing(false);
   };
   
@@ -57,7 +59,6 @@ const GithubSyncModal: React.FC<GithubSyncModalProps> = ({ isOpen, onClose, onCo
               <div className="mt-2">
                 <p className="text-sm text-gray-500">
                   Dữ liệu sẽ được lưu trữ dưới dạng một Gist riêng tư trên tài khoản GitHub của bạn.
-                  Token sẽ không được lưu lại sau khi thao tác hoàn tất.
                 </p>
                  <a href="https://github.com/settings/tokens/new?scopes=gist&description=Logistics%20App%20Sync" target="_blank" rel="noopener noreferrer" className="text-sm text-blue-600 hover:underline">
                   Nhấn vào đây để tạo Personal Access Token.
@@ -93,6 +94,27 @@ const GithubSyncModal: React.FC<GithubSyncModalProps> = ({ isOpen, onClose, onCo
                 className="mt-1 block w-full bg-white text-black border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
                 placeholder="e.g., 123abc456def..."
               />
+            </div>
+            <div className="border-t border-gray-200 pt-4">
+                <div className="relative flex items-start">
+                    <div className="flex h-5 items-center">
+                        <input
+                        id="remember"
+                        name="remember"
+                        type="checkbox"
+                        checked={remember}
+                        onChange={(e) => setRemember(e.target.checked)}
+                        className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                        />
+                    </div>
+                    <div className="ml-3 text-sm">
+                        <label htmlFor="remember" className="font-medium text-gray-700">
+                        Ghi nhớ và tự động đồng bộ
+                        </label>
+                        <p className="text-gray-500">Lưu thông tin và tự động cập nhật Gist khi có thay đổi.</p>
+                        <p className="text-xs text-red-600 mt-1">Cảnh báo: Personal Access Token sẽ được lưu trong bộ nhớ cục bộ của trình duyệt.</p>
+                    </div>
+                </div>
             </div>
           </div>
         </div>

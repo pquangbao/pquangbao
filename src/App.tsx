@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useRef } from 'react';
+import React, { useState, useMemo, useRef, useEffect } from 'react';
 import { Order, User } from './types';
 import { useLocalStorage } from './hooks/useLocalStorage';
 import { generateReportHTML } from './services/reportingService';
@@ -52,8 +52,42 @@ const App: React.FC = () => {
     isOpen: false,
     mode: 'sync'
   });
-
+  const [syncCredentials, setSyncCredentials] = useLocalStorage('syncCredentials', { pat: '', gistId: '' });
+  const [syncStatus, setSyncStatus] = useState<'idle' | 'syncing' | 'synced' | 'error'>('idle');
+  
+  const debounceTimer = useRef<number | null>(null);
+  const isInitialMount = useRef(true);
+  
   const userMap = useMemo(() => new Map(users.map(u => [u.id, u])), [users]);
+
+  // Effect for automatic synchronization
+  useEffect(() => {
+    if (isInitialMount.current) {
+        isInitialMount.current = false;
+        if(syncCredentials.pat && syncCredentials.gistId) setSyncStatus('synced');
+        return;
+    }
+    
+    if (syncCredentials.pat && syncCredentials.gistId) {
+        if (debounceTimer.current) {
+            clearTimeout(debounceTimer.current);
+        }
+        setSyncStatus('syncing');
+        debounceTimer.current = window.setTimeout(async () => {
+            try {
+                const dataToSync = { orders, users, suppliers };
+                await updateGist(syncCredentials.pat, syncCredentials.gistId, dataToSync);
+                setSyncStatus('synced');
+            } catch (error) {
+                console.error("Auto-sync failed:", error);
+                setSyncStatus('error');
+                showToast('Lỗi tự động đồng bộ. Vui lòng kiểm tra lại thông tin.');
+                setSyncCredentials({ pat: '', gistId: '' }); // Disable auto-sync on error
+            }
+        }, 2000); // 2-second debounce
+    }
+  }, [orders, users, suppliers, syncCredentials]);
+
 
   const showToast = (message: string) => {
     setToast({ id: Date.now(), message });
@@ -391,31 +425,49 @@ const App: React.FC = () => {
       setSyncModalState({ isOpen: false, mode: 'sync' });
   };
 
-  const handleGithubSync = async (pat: string, gistId: string) => {
+  const handleGithubSync = async (pat: string, gistId: string, remember: boolean) => {
       const { mode } = syncModalState;
+      setSyncStatus('syncing');
       try {
           if (mode === 'sync') {
               const backupData = { orders, users, suppliers };
+              let finalGistId = gistId;
               if (gistId) {
                   await updateGist(pat, gistId, backupData);
                   showToast(`Đã cập nhật Gist ${gistId} thành công!`);
               } else {
                   const { id: newGistId } = await createGist(pat, backupData);
                   showToast(`Đã tạo Gist mới thành công! ID: ${newGistId}`);
+                  finalGistId = newGistId;
+              }
+              if (remember) {
+                  setSyncCredentials({ pat, gistId: finalGistId });
+                  showToast('Đã bật tự động đồng bộ.');
+              } else {
+                  setSyncCredentials({ pat: '', gistId: '' });
               }
           } else { // mode === 'load'
               const data = await getGist(pat, gistId);
-              // Basic validation
-              if (!data.orders || !data.users || !data.suppliers || !Array.isArray(data.orders) || !Array.isArray(data.users) || !Array.isArray(data.suppliers)) {
+              if (!data.orders || !data.users || !data.suppliers) {
                   throw new Error('Invalid backup data format in Gist.');
               }
               setDataToRestore(data);
+               if (remember) {
+                  setSyncCredentials({ pat, gistId });
+                  showToast('Đã bật tự động đồng bộ.');
+              } else {
+                  setSyncCredentials({ pat: '', gistId: '' });
+              }
           }
+          setSyncStatus('synced');
           handleCloseSyncModal();
       } catch (error) {
+          setSyncStatus('error');
           console.error("GitHub Sync Error:", error);
           showToast(`Lỗi: ${error instanceof Error ? error.message : 'Unknown error'}`);
-          // Do not close modal on error, so user can try again.
+          if (remember) {
+              setSyncCredentials({ pat: '', gistId: '' });
+          }
       }
   };
 
@@ -444,6 +496,7 @@ const App: React.FC = () => {
         authenticatedUser={authenticatedUser}
         onLogout={handleLogout}
         onOpenSyncModal={handleOpenSyncModal}
+        syncStatus={syncStatus}
       />
       <main className="p-4 sm:p-6 lg:p-8">
         <div className="max-w-7xl mx-auto">
@@ -555,6 +608,7 @@ const App: React.FC = () => {
             onClose={handleCloseSyncModal}
             onConfirm={handleGithubSync}
             mode={syncModalState.mode}
+            credentials={syncCredentials}
         />
       )}
       <ToastContainer>
