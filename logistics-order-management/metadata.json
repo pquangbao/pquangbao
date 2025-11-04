@@ -1,0 +1,5 @@
+{
+  "name": "Logistics Order Management",
+  "description": "An application for companies to manage and track daily freight transport orders. It allows different teams to submit shipping requests, which are then immediately visible to the logistics manager for allocation. The app also features reporting capabilities to export order summaries by requester and supplier.",
+  "requestFramePermissions": []
+}
